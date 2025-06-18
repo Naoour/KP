@@ -29,10 +29,10 @@
                 @foreach($barangs as $barang)
                 <tr class="{{ $barang->status == 'dipinjam' ? 'opacity-50' : '' }}">
                     <td class="text-center">
-                        @if($barang->foto)
-                            <img src="{{ asset('storage/' . $barang->foto) }}" width="80">
+                        @if($barang->foto && file_exists(public_path('storage/' . $barang->foto)))
+                            <img src="{{ asset('storage/' . $barang->foto) }}" width="80" height="80" style="object-fit: cover;">
                         @else
-                            Tidak Ada
+                            <span class="text-muted">Tidak Ada</span>
                         @endif
                     </td>
                     <td>{{ $barang->nama }}</td>

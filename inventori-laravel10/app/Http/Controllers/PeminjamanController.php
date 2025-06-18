@@ -50,4 +50,22 @@ class PeminjamanController extends Controller
 
         return redirect()->route('dashboard')->with('success', 'Peminjaman berhasil dihapus dan barang dikembalikan.');
     }
+
+    public function kembalikan($id)
+    {
+        $peminjaman = Peminjaman::findOrFail($id);
+
+        if ($peminjaman->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $peminjaman->tanggal_kembali = now();
+        $peminjaman->save();
+
+        $barang = $peminjaman->barang;
+        $barang->status = 'tidak dipinjam';
+        $barang->save();
+
+        return redirect()->route('keluarmasuk.index')->with('success', 'Barang telah dikembalikan');
+    }
 }
