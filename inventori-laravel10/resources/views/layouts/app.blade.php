@@ -16,24 +16,33 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav me-auto">
 
-        <li class="nav-item">
-          <a class="nav-link {{ request()->routeIs('barang.*') ? 'active' : '' }}" href="{{ route('barang.index') }}">Barang</a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" href="{{ route('keluarmasuk.index') }}">Keluar/Masuk</a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" href="{{ route('laporan.index') }}">Laporan</a>
-        </li>
-
-        @if(auth()->user()->role == 'admin')
-        <li class="nav-item">
-          <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">Manajemen User</a>
-        </li>
+        {{-- Untuk admin dan user --}}
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'user')
+          <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('barang.*') ? 'active' : '' }}" href="{{ route('barang.index') }}">Barang</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('keluarmasuk.*') ? 'active' : '' }}" href="{{ route('keluarmasuk.index') }}">Keluar/Masuk</a>
+          </li>
         @endif
+
+        {{-- Untuk admin dan kepala --}}
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'kepala')
+          <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('laporan.*') ? 'active' : '' }}" href="{{ route('laporan.index') }}">Laporan</a>
+          </li>
+        @endif
+
+        {{-- Khusus admin --}}
+        @if(auth()->user()->role === 'admin')
+          <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">Manajemen User</a>
+          </li>
+        @endif
+
       </ul>
+
+      {{-- Tombol logout --}}
       <form method="POST" action="{{ route('logout') }}">
         @csrf
         <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>

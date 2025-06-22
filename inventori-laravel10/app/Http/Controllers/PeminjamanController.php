@@ -5,13 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\Peminjaman;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Facades\Image;
 
 class PeminjamanController extends Controller
 {
     public function create(Request $request)
     {
-        $barangs = Barang::where('status', 'tidak dipinjam')->get();
-        $selectedBarangId = $request->barang_id; // tangkap dari URL jika ada
+        $barangs = Barang::where('status', 'tidak dipinjam')
+                         ->where('kondisi', 'baik')
+                         ->get();
+        $selectedBarangId = $request->barang_id;
         return view('peminjaman.create', compact('barangs', 'selectedBarangId'));
     }
 
@@ -20,16 +24,38 @@ class PeminjamanController extends Controller
         $request->validate([
             'barang_id' => 'required|exists:barangs,id',
             'tujuan' => 'required|string',
+            'foto' => 'nullable',
         ]);
 
-        Peminjaman::create([
-            'user_id' => auth()->id(),
-            'barang_id' => $request->barang_id,
-            'tujuan' => $request->tujuan,
-            'tanggal' => now(),
-        ]);
+        $barang = Barang::where('id', $request->barang_id)
+                        ->where('status', 'tidak dipinjam')
+                        ->where('kondisi', 'baik')
+                        ->first();
 
-        $barang = Barang::find($request->barang_id);
+        if (!$barang) {
+            return back()->withErrors(['barang_id' => 'Barang tidak valid atau tidak tersedia untuk dipinjam.']);
+        }
+
+        $peminjaman = new Peminjaman();
+        $peminjaman->user_id = auth()->id();
+        $peminjaman->barang_id = $barang->id;
+        $peminjaman->tujuan = $request->tujuan;
+        $peminjaman->tanggal = now();
+
+        if ($request->filled('foto')) {
+            $imageData = $request->input('foto');
+
+            if (preg_match('/^data:image\/(\w+);base64,/', $imageData)) {
+                $image = Image::make($imageData)->encode('jpg', 90);
+                $fileName = time() . '.jpg';
+                $path = 'peminjaman_foto/' . $fileName;
+                Storage::disk('public')->put($path, $image);
+                $peminjaman->foto = $path;
+            }
+        }
+
+        $peminjaman->save();
+
         $barang->status = 'dipinjam';
         $barang->save();
 
@@ -39,13 +65,9 @@ class PeminjamanController extends Controller
     public function destroy($id)
     {
         $peminjaman = Peminjaman::findOrFail($id);
-
-        // Ubah status barang jadi "tidak dipinjam"
         $barang = $peminjaman->barang;
         $barang->status = 'tidak dipinjam';
         $barang->save();
-
-        // Hapus data peminjaman
         $peminjaman->delete();
 
         return redirect()->route('dashboard')->with('success', 'Peminjaman berhasil dihapus dan barang dikembalikan.');

@@ -4,33 +4,55 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Peminjaman;
-use Illuminate\Support\Facades\DB;
 use PDF;
 
 class LaporanController extends Controller
 {
     public function index()
     {
-        // Ambil data per hari
-        $harian = Peminjaman::selectRaw('DATE(tanggal) as label, count(*) as total')
+        $sevenDaysAgo = now()->subDays(7)->startOfDay();
+
+        $harian = Peminjaman::where('status_proses', 'telah diproses')
+            ->whereDate('tanggal', '>=', $sevenDaysAgo)
+            ->selectRaw('DATE(tanggal) as label, count(*) as total')
             ->groupBy('label')->get();
 
-        // Ambil data per bulan
-        $bulanan = Peminjaman::selectRaw('DATE_FORMAT(tanggal, "%Y-%m") as label, count(*) as total')
+        $bulanan = Peminjaman::where('status_proses', 'telah diproses')
+            ->whereDate('tanggal', '>=', $sevenDaysAgo)
+            ->selectRaw('DATE_FORMAT(tanggal, "%Y-%m") as label, count(*) as total')
             ->groupBy('label')->get();
 
-        // Ambil data per tahun
-        $tahunan = Peminjaman::selectRaw('YEAR(tanggal) as label, count(*) as total')
+        $tahunan = Peminjaman::where('status_proses', 'telah diproses')
+            ->whereDate('tanggal', '>=', $sevenDaysAgo)
+            ->selectRaw('YEAR(tanggal) as label, count(*) as total')
             ->groupBy('label')->get();
 
-        return view('laporan.index', compact('harian', 'bulanan', 'tahunan'));
+        // Menampilkan semua peminjaman yang telah diproses sebagai barang keluar
+        $keluar = Peminjaman::where('status_proses', 'telah diproses')
+            ->whereDate('tanggal', '>=', $sevenDaysAgo)
+            ->with('user', 'barang')
+            ->latest()
+            ->paginate(5, ['*'], 'keluar_page');
+
+        // Barang masuk tetap hanya yang sudah dikembalikan
+        $masuk = Peminjaman::whereNotNull('tanggal_kembali')
+            ->whereDate('tanggal_kembali', '>=', $sevenDaysAgo)
+            ->with('user', 'barang')
+            ->latest()
+            ->paginate(5, ['*'], 'masuk_page');
+
+        return view('laporan.index', compact('harian', 'bulanan', 'tahunan', 'keluar', 'masuk'));
     }
 
     public function downloadPdf()
     {
-        $peminjaman = Peminjaman::with('user')->get();
+        $keluar = Peminjaman::where('status_proses', 'telah diproses')
+            ->with('user', 'barang')->get();
 
-        $pdf = PDF::loadView('laporan.pdf', compact('peminjaman'));
+        $masuk = Peminjaman::whereNotNull('tanggal_kembali')
+            ->with('user', 'barang')->get();
+
+        $pdf = PDF::loadView('laporan.pdf', compact('keluar', 'masuk'));
         return $pdf->download('laporan_peminjaman.pdf');
     }
 }

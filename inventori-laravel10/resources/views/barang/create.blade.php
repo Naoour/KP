@@ -19,7 +19,18 @@
 
         <div class="mb-3">
             <label for="nama" class="form-label">Nama Barang</label>
-            <input type="text" class="form-control" id="nama" name="nama" value="{{ old('nama') }}" required>
+            <input 
+                type="text" 
+                class="form-control" 
+                id="nama" 
+                name="nama" 
+                value="{{ old('nama') }}" 
+                required
+                minlength="3"
+                maxlength="40"
+                pattern="[A-Za-z\s]+"
+                title="Nama hanya boleh huruf dan minimal 3 huruf, maksimal 40 huruf"
+            >
         </div>
 
         <div class="mb-3">
@@ -33,7 +44,16 @@
 
         <div class="mb-3">
             <label for="fungsi" class="form-label">Fungsi</label>
-            <textarea class="form-control" id="fungsi" name="fungsi" rows="3" required>{{ old('fungsi') }}</textarea>
+            <textarea 
+                class="form-control" 
+                id="fungsi" 
+                name="fungsi" 
+                rows="3" 
+                maxlength="50" 
+                required
+                pattern="[A-Za-z\s]+"
+                title="Fungsi hanya boleh huruf dan spasi, maksimal 50 karakter"
+            >{{ old('fungsi') }}</textarea>
         </div>
 
         <div class="mb-3">
@@ -56,12 +76,31 @@
         </div>
 
         <div class="mb-3">
-            <label for="foto" class="form-label">Foto (opsional)</label>
-            <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
+            <label for="foto" class="form-label">Foto</label>
+            <input 
+                type="file" 
+                class="form-control" 
+                id="foto" 
+                name="foto" 
+                accept="image/*"
+                onchange="validateSize(this)"
+                required
+            >
+            <small class="text-danger">Foto wajib diunggah. Maksimal ukuran 5MB.</small>
         </div>
 
         <button type="submit" class="btn btn-primary">Simpan</button>
         <a href="{{ route('barang.index') }}" class="btn btn-secondary">Batal</a>
     </form>
 </div>
+
+<script>
+    function validateSize(input) {
+        const file = input.files[0];
+        if (file && file.size > 5 * 1024 * 1024) {
+            alert("Ukuran file tidak boleh lebih dari 5MB");
+            input.value = "";
+        }
+    }
+</script>
 @endsection

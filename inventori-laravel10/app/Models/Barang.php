@@ -4,7 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Peminjaman;  // <-- import model Peminjaman
+use App\Models\Peminjaman;
+use App\Models\Laporan;
 
 class Barang extends Model
 {
@@ -19,8 +20,15 @@ class Barang extends Model
         'foto',
     ];
 
-    public function peminjaman()
+    // 📗 Relasi: Satu barang bisa dipinjam berkali-kali
+    public function peminjamans()
     {
-        return $this->hasOne(Peminjaman::class);
+        return $this->hasMany(Peminjaman::class);
+    }
+
+    // 📕 Relasi: Satu barang bisa muncul di banyak laporan
+    public function laporans()
+    {
+        return $this->hasMany(Laporan::class);
     }
 }

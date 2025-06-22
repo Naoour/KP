@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Peminjaman;
 
 class User extends Authenticatable
 {
@@ -17,5 +18,9 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
-    // Role bisa 'admin' atau 'user'
+    // 📘 Relasi: Satu user bisa melakukan banyak peminjaman
+    public function peminjamans()
+    {
+        return $this->hasMany(Peminjaman::class);
+    }
 }
